@@ -7,6 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    (function () {
+      var s = localStorage.getItem("theme");
+      var d = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.dataset.theme = s || (d ? "dark" : "light");
+    })();
+  </script>
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -150,26 +157,56 @@
       .label-male  { font-size: 0.75rem; }
     }
 
-    @media (prefers-color-scheme: dark) {
-      body         { background: #0f0f0f; color: #e8e8e8; }
-      h1           { color: #f0f0f0; }
-      .subtitle    { color: #555; }
-      .meta-item   { color: #3a3a3a; }
-      .legend-item { color: #555; }
-      .member-name { color: #e8e8e8; }
+    .header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 32px;
     }
+
+    .header-text { flex: 1; }
+
+    .theme-btn {
+      flex-shrink: 0;
+      margin-top: 2px;
+      background: none;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      color: #999;
+      cursor: pointer;
+      line-height: 1;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .theme-btn:hover { border-color: #bbb; color: #555; }
+
+    html[data-theme="dark"] body         { background: #0f0f0f; color: #e8e8e8; }
+    html[data-theme="dark"] h1           { color: #f0f0f0; }
+    html[data-theme="dark"] .subtitle    { color: #555; }
+    html[data-theme="dark"] .meta-item   { color: #3a3a3a; }
+    html[data-theme="dark"] .legend-item { color: #555; }
+    html[data-theme="dark"] .member-name { color: #e8e8e8; }
+    html[data-theme="dark"] .theme-btn   { border-color: #2e2e2e; color: #555; }
+    html[data-theme="dark"] .theme-btn:hover { border-color: #444; color: #aaa; }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>Manifest – Instagram Takipçi Cinsiyet Oranı</h1>
-      <p class="subtitle">Her 15 dakikada bir güncellenir</p>
-      <div class="meta">
-        <span class="meta-item" id="last-updated">Son güncelleme: —</span>
-        <span class="meta-item" id="next-update">Sonraki güncelleme: —</span>
+    <div class="header-row">
+      <div class="header-text">
+        <h1>Manifest – Instagram Takipçi Cinsiyet Oranı</h1>
+        <p class="subtitle">Her 15 dakikada bir güncellenir</p>
+        <div class="meta">
+          <span class="meta-item" id="last-updated">Son güncelleme: —</span>
+          <span class="meta-item" id="next-update">Sonraki güncelleme: —</span>
+        </div>
       </div>
-    </header>
+      <button class="theme-btn" id="theme-btn" aria-label="Tema değiştir"></button>
+    </div>
 
     <div class="legend">
       <div class="legend-item">
@@ -298,7 +335,24 @@
       startCountdown();
     }
 
+    function initTheme() {
+      var btn = document.getElementById("theme-btn");
+      function sync() {
+        var dark = document.documentElement.dataset.theme === "dark";
+        btn.textContent = dark ? "☀" : "☽";
+      }
+      sync();
+      btn.addEventListener("click", function () {
+        var dark = document.documentElement.dataset.theme === "dark";
+        var next = dark ? "light" : "dark";
+        document.documentElement.dataset.theme = next;
+        localStorage.setItem("theme", next);
+        sync();
+      });
+    }
+
     buildDOM();
+    initTheme();
     renderAll(false);
     document.getElementById("last-updated").textContent =
       "Son güncelleme: " + fmt(new Date());
