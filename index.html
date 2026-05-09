@@ -225,33 +225,42 @@
       ORDER.forEach((name, i) => {
         const div = document.createElement("div");
         div.className = "member";
+        div.dataset.idx = i;
         div.innerHTML =
           '<div class="member-name">' + name + "</div>" +
           '<div class="bar-labels">' +
-            '<span class="label-female" id="lf-' + i + '"></span>' +
-            '<span class="label-male"   id="lm-' + i + '"></span>' +
+            '<span class="label-female"></span>' +
+            '<span class="label-male"></span>' +
           "</div>" +
-          '<div class="bar-wrap" id="bw-' + i + '">' +
-            '<div class="bar-female" id="bf-' + i + '"></div>' +
+          '<div class="bar-wrap">' +
+            '<div class="bar-female"></div>' +
           "</div>";
         list.appendChild(div);
       });
     }
 
     function renderAll(flash) {
+      const list = document.getElementById("members-list");
+
       ORDER.forEach((name, i) => {
+        const div = list.querySelector('[data-idx="' + i + '"]');
         const { female, male } = current[name];
-        document.getElementById("lf-" + i).textContent = "%" + female.toFixed(1) + " Kadın";
-        document.getElementById("lm-" + i).textContent = "Erkek %" + male.toFixed(1);
-        document.getElementById("bf-" + i).style.width = female + "%";
+        div.querySelector(".label-female").textContent = "%" + female.toFixed(1) + " Kadın";
+        div.querySelector(".label-male").textContent   = "Erkek %" + male.toFixed(1);
+        div.querySelector(".bar-female").style.width   = female + "%";
 
         if (flash) {
-          const bw = document.getElementById("bw-" + i);
+          const bw = div.querySelector(".bar-wrap");
           bw.classList.remove("flash");
           void bw.offsetWidth;
           bw.classList.add("flash");
         }
       });
+
+      // Re-sort cards by male % descending
+      Array.from(list.children)
+        .sort((a, b) => current[ORDER[b.dataset.idx]].male - current[ORDER[a.dataset.idx]].male)
+        .forEach((card) => list.appendChild(card));
     }
 
     function startCountdown() {
