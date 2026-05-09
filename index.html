@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manifest – Instagram Takipçi Cinsiyet Oranı</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #fafafa;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 36px 20px 64px;
+    }
+
+    header {
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #111;
+      line-height: 1.35;
+      margin-bottom: 5px;
+    }
+
+    .subtitle {
+      font-size: 0.75rem;
+      color: #aaa;
+      margin-bottom: 14px;
+    }
+
+    .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .meta-item {
+      font-size: 0.7rem;
+      color: #ccc;
+      letter-spacing: 0.01em;
+    }
+
+    .legend {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.72rem;
+      color: #777;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot-female { background: #9B59B6; }
+    .dot-male   { background: #E91E8C; }
+
+    .member {
+      margin-bottom: 28px;
+    }
+
+    .member-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+
+    .bar-labels {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .label-female {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #9B59B6;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .label-male {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #E91E8C;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .bar-wrap {
+      height: 28px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #E91E8C;
+      position: relative;
+    }
+
+    .bar-female {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background: #9B59B6;
+      width: 0%;
+      transition: width 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes flash-update {
+      0%   { opacity: 1; }
+      18%  { opacity: 0.45; }
+      45%  { opacity: 1; }
+      68%  { opacity: 0.65; }
+      100% { opacity: 1; }
+    }
+
+    .bar-wrap.flash {
+      animation: flash-update 0.75s ease forwards;
+    }
+
+    @media (min-width: 480px) {
+      h1           { font-size: 1.25rem; }
+      .member-name { font-size: 0.95rem; }
+      .label-female,
+      .label-male  { font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Manifest – Instagram Takipçi Cinsiyet Oranı</h1>
+      <p class="subtitle">Her 15 dakikada bir güncellenir</p>
+      <div class="meta">
+        <span class="meta-item" id="last-updated">Son güncelleme: —</span>
+        <span class="meta-item" id="next-update">Sonraki güncelleme: —</span>
+      </div>
+    </header>
+
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot dot-female"></div>
+        <span>Kadın</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot dot-male"></div>
+        <span>Erkek</span>
+      </div>
+    </div>
+
+    <div id="members-list"></div>
+  </div>
+
+  <script>
+    // Replace mock data with real API calls here when available
+
+    const baseline = {
+      "Esin Bahat":        { female: 76, male: 24 },
+      "Hilal Yelekçi":     { female: 72, male: 28 },
+      "Lidya Pınar":       { female: 74, male: 26 },
+      "Mina Solak":        { female: 75, male: 25 },
+      "Sueda Uluca":       { female: 78, male: 22 },
+      "Zeynep Sude Oktay": { female: 73, male: 27 },
+    };
+
+    const ORDER = [
+      "Esin Bahat",
+      "Hilal Yelekçi",
+      "Lidya Pınar",
+      "Mina Solak",
+      "Sueda Uluca",
+      "Zeynep Sude Oktay",
+    ];
+
+    const INTERVAL_MS = 15 * 60 * 1000;
+
+    let current = JSON.parse(JSON.stringify(baseline));
+    let nextUpdateTime = Date.now() + INTERVAL_MS;
+    let countdownTimer = null;
+
+    function fmt(date) {
+      return date.toLocaleTimeString("tr-TR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+    }
+
+    function clamp(v, lo, hi) {
+      return Math.max(lo, Math.min(hi, v));
+    }
+
+    function nudge(val) {
+      const delta = (Math.random() * 2 - 1) * 2;
+      return Math.round(clamp(val + delta, 55, 92) * 10) / 10;
+    }
+
+    function buildDOM() {
+      const list = document.getElementById("members-list");
+      ORDER.forEach((name, i) => {
+        const div = document.createElement("div");
+        div.className = "member";
+        div.innerHTML =
+          '<div class="member-name">' + name + "</div>" +
+          '<div class="bar-labels">' +
+            '<span class="label-female" id="lf-' + i + '"></span>' +
+            '<span class="label-male"   id="lm-' + i + '"></span>' +
+          "</div>" +
+          '<div class="bar-wrap" id="bw-' + i + '">' +
+            '<div class="bar-female" id="bf-' + i + '"></div>' +
+          "</div>";
+        list.appendChild(div);
+      });
+    }
+
+    function renderAll(flash) {
+      ORDER.forEach((name, i) => {
+        const { female, male } = current[name];
+        document.getElementById("lf-" + i).textContent = "%" + female.toFixed(1) + " Kadın";
+        document.getElementById("lm-" + i).textContent = "Erkek %" + male.toFixed(1);
+        document.getElementById("bf-" + i).style.width = female + "%";
+
+        if (flash) {
+          const bw = document.getElementById("bw-" + i);
+          bw.classList.remove("flash");
+          void bw.offsetWidth;
+          bw.classList.add("flash");
+        }
+      });
+    }
+
+    function startCountdown() {
+      if (countdownTimer) clearInterval(countdownTimer);
+      countdownTimer = setInterval(function () {
+        const rem = Math.max(0, nextUpdateTime - Date.now());
+        const m = String(Math.floor(rem / 60000)).padStart(2, "0");
+        const s = String(Math.floor((rem % 60000) / 1000)).padStart(2, "0");
+        document.getElementById("next-update").textContent =
+          "Sonraki güncelleme: " + m + ":" + s;
+      }, 1000);
+    }
+
+    function tick() {
+      ORDER.forEach(function (name) {
+        const f = nudge(current[name].female);
+        current[name] = {
+          female: f,
+          male: parseFloat((100 - f).toFixed(1)),
+        };
+      });
+      nextUpdateTime = Date.now() + INTERVAL_MS;
+      renderAll(true);
+      document.getElementById("last-updated").textContent =
+        "Son güncelleme: " + fmt(new Date());
+      startCountdown();
+    }
+
+    buildDOM();
+    renderAll(false);
+    document.getElementById("last-updated").textContent =
+      "Son güncelleme: " + fmt(new Date());
+    startCountdown();
+
+    setInterval(tick, INTERVAL_MS);
+  </script>
+</body>
+</html>
